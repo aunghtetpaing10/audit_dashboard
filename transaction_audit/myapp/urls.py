@@ -2,5 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('api/transactions/', views.TransactionListView.as_view(), name='transaction-list')
+    path('api/transactions/', views.TransactionListView.as_view(), name='transaction-list'),
+    path('dashboard/', views.DashboardView.as_view(), name='dashboard')
 ]
