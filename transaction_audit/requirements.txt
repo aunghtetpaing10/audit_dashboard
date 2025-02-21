@@ -1,0 +1,9 @@
+django
+djangorestframework
+djangorestframework-simplejwt
+django-simple-history
+plotly
+django-filter
+django-cors-headers
+psycopg2
+python-dotenv
