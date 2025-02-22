@@ -7,3 +7,13 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['id', 'amount', 'status', 'timestamp', 'is_flagged', 'merchant', 'approved_by']
+        
+class TransactionApproveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['status', 'approved_by']
+
+class TransactionToggleFlagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['is_flagged']
