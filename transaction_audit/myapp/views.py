@@ -17,6 +17,7 @@ from .serializers import TransactionSerializer, TransactionApproveSerializer, Tr
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 import json
+from django.db.models import Sum
 
 class TransactionPagination(PageNumberPagination):
     page_size = 10
@@ -117,7 +118,7 @@ class DashboardView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Transaction.objects.all().order_by('-timestamp')
+        queryset = Transaction.objects.all()
         status = self.request.GET.get('status')
         merchant = self.request.GET.get('merchant')
 
@@ -127,6 +128,21 @@ class DashboardView(ListView):
             queryset = queryset.filter(merchant__icontains=merchant)
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        status_totals = Transaction.objects.values('status').annotate(
+            total_amount=Sum('amount')
+        ).order_by('status')
+        
+        merchant_totals = Transaction.objects.values('merchant').annotate(
+            total_amount=Sum('amount')
+        ).order_by('-total_amount')[:10]
+        
+        context['status_totals'] = status_totals
+        context['merchant_totals'] = merchant_totals
+        return context
 
     def get_template_names(self):
         if self.request.headers.get('HX-Request'):

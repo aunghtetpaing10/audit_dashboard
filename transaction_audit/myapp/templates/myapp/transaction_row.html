@@ -1,3 +1,5 @@
+{% load humanize %}
+
 <tr id="transaction-{{ transaction.id }}"
     class="{% if transaction.is_flagged %}bg-yellow-50{% endif %} hover:bg-gray-50 transition-colors duration-150 relative"
     data-transaction-id="{{ transaction.id }}"
@@ -22,7 +24,7 @@
         </div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm font-medium text-gray-900">${{ transaction.amount }}</div>
+        <div class="text-sm font-medium text-gray-900">${{ transaction.amount|floatformat:2|intcomma }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full

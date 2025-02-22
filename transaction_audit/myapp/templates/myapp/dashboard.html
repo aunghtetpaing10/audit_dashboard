@@ -1,5 +1,6 @@
 {% extends 'myapp/base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 <div>
@@ -88,8 +89,47 @@
     </div>
 
     <!-- Transaction List -->
-    <div id="transaction-list" class="bg-white rounded-lg shadow-sm border border-gray-100">
+    <div id="transaction-list" class="bg-white rounded-lg shadow-sm border border-gray-100 mb-8">
         {% include "myapp/transaction_list.html" %}
+    </div>
+
+    <!-- Transaction Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Status Totals -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Transaction Amounts by Status
+            </h2>
+            <div class="space-y-4">
+                {% for total in status_totals %}
+                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <span class="font-medium capitalize">{{ total.status }}</span>
+                    <span class="text-gray-900">${{ total.total_amount|floatformat:2|intcomma }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Merchant Totals -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Top 10 Merchants by Volume
+            </h2>
+            <div class="space-y-4">
+                {% for total in merchant_totals %}
+                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <span class="font-medium truncate flex-1 mr-4">{{ total.merchant }}</span>
+                    <span class="text-gray-900">${{ total.total_amount|floatformat:2|intcomma }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 
