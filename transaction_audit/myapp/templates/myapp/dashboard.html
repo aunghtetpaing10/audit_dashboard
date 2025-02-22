@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-<div>
+<div class="max-w-7xl mx-auto">
     <!-- Initialize JavaScript variables -->
     <script>
         const accessToken = '{{ request.session.access_token }}';
@@ -13,6 +13,8 @@
         const updateTokenUrl = '{% url "update-token" %}';
         const loginUrl = '{% url "login" %}';
     </script>
+    <!-- Load Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Load dashboard JavaScript -->
     <script src="{% static 'myapp/js/dashboard.js' %}"></script>
 
@@ -93,43 +95,64 @@
         {% include "myapp/transaction_list.html" %}
     </div>
 
-    <!-- Transaction Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Status Totals -->
-        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                Transaction Amounts by Status
-            </h2>
-            <div class="space-y-4">
-                {% for total in status_totals %}
-                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                    <span class="font-medium capitalize">{{ total.status }}</span>
-                    <span class="text-gray-900">${{ total.total_amount|floatformat:2|intcomma }}</span>
+    <!-- Analytics Section -->
+    <div class="mt-12">
+        <h2 class="text-xl font-bold text-gray-900 mb-8">Transaction Analytics</h2>
+        
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Status Distribution Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Status Distribution</h3>
+                    <div class="text-sm text-gray-500">By amount</div>
                 </div>
-                {% endfor %}
+                <div id="status-chart" class="h-80"></div>
             </div>
-        </div>
 
-        <!-- Merchant Totals -->
-        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                Top 10 Merchants by Volume
-            </h2>
-            <div class="space-y-4">
-                {% for total in merchant_totals %}
-                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                    <span class="font-medium truncate flex-1 mr-4">{{ total.merchant }}</span>
-                    <span class="text-gray-900">${{ total.total_amount|floatformat:2|intcomma }}</span>
+            <!-- Top Merchants Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Top Merchants</h3>
+                    <div class="text-sm text-gray-500">By volume</div>
                 </div>
-                {% endfor %}
+                <div id="merchant-chart" class="h-80"></div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Initialize Plotly charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Distribution Chart
+        const statusChart = {{ status_chart|safe }};
+        Plotly.newPlot('status-chart', statusChart.data, statusChart.layout, {
+            responsive: true,
+            displayModeBar: false,
+            staticPlot: false
+        });
+
+        // Top Merchants Chart
+        const merchantChart = {{ merchant_chart|safe }};
+        Plotly.newPlot('merchant-chart', merchantChart.data, merchantChart.layout, {
+            responsive: true,
+            displayModeBar: false,
+            staticPlot: false
+        });
+
+        // Make charts responsive
+        function resizeCharts() {
+            Plotly.Plots.resize('status-chart');
+            Plotly.Plots.resize('merchant-chart');
+        }
+
+        // Resize charts on window resize with debounce
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeCharts, 100);
+        });
+    });
+</script>
 {% endblock %} 
