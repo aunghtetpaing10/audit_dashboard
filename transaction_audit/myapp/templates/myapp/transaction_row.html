@@ -1,9 +1,11 @@
 {% load humanize %}
 
 <tr id="transaction-{{ transaction.id }}"
-    class="{% if transaction.is_flagged %}bg-yellow-50{% endif %} hover:bg-gray-50 transition-colors duration-150 relative"
+    class="{% if transaction.is_flagged %}bg-yellow-50{% endif %} hover:bg-gray-50 transition-all duration-300 ease-in-out opacity-100"
     data-transaction-id="{{ transaction.id }}"
-    data-timestamp="{{ transaction.timestamp|date:'c' }}">
+    data-timestamp="{{ transaction.timestamp|date:'c' }}"
+    data-status="{{ transaction.status }}"
+    data-merchant="{{ transaction.merchant|lower }}">
     <!-- Row Loading Overlay -->
     <td colspan="6" class="htmx-indicator absolute inset-0 bg-white bg-opacity-60 z-10">
         <div class="h-full flex items-center justify-center">
@@ -74,12 +76,12 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <div class="flex items-center space-x-3">
-            {% if transaction.status == 'pending' %}
+            {% if transaction.status == 'pending' and request.user.is_staff %}
             <button class="inline-flex items-center text-green-600 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-md"
                     hx-put="{% url 'approve-transaction' transaction.id %}"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                     hx-target="closest tr"
-                    hx-swap="outerHTML swap:1s">
+                    hx-swap="outerHTML">
                 <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -91,7 +93,7 @@
                     hx-put="{% url 'toggle-flag' transaction.id %}"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                     hx-target="closest tr"
-                    hx-swap="outerHTML swap:1s">
+                    hx-swap="outerHTML">
                 <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
                 </svg>
@@ -107,4 +109,44 @@
             {% endif %}
         </div>
     </td>
-</tr> 
+</tr>
+
+<style>
+    @keyframes fadeOutRow {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(-10px); }
+    }
+    
+    .row-fade-out {
+        animation: fadeOutRow 0.3s ease-out forwards;
+    }
+</style>
+
+<script>
+    function handleRowUpdate(row) {
+        // Get current filters and ensure they're not empty strings
+        const statusSelect = document.querySelector('select[name="status"]');
+        const merchantInput = document.querySelector('input[name="merchant"]');
+        
+        const statusFilter = statusSelect ? statusSelect.value : '';
+        const merchantFilter = merchantInput ? merchantInput.value.toLowerCase().trim() : '';
+        
+        // Add a one-time event listener for the HTMX afterSwap event
+        row.addEventListener('htmx:afterSwap', function(evt) {
+            const updatedRow = evt.detail.target;
+            const rowStatus = updatedRow.dataset.status;
+            const rowMerchant = updatedRow.dataset.merchant;
+            
+            // Only hide if there are active filters that don't match
+            if ((statusFilter !== '' && rowStatus !== statusFilter) || 
+                (merchantFilter !== '' && !rowMerchant.includes(merchantFilter))) {
+                updatedRow.style.transition = 'opacity 0.3s ease-out';
+                updatedRow.style.opacity = '0';
+                setTimeout(() => {
+                    updatedRow.style.display = 'none';
+                    updatedRow.remove();
+                }, 300);
+            }
+        }, { once: true });
+    }
+</script> 

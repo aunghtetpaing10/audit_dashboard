@@ -38,6 +38,9 @@ class TransactionApproveView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
     
     def perform_update(self, serializer):
+        if not self.request.user.is_staff:
+            raise ValidationError("Only admin users can approve transactions.")
+            
         instance = self.get_object()
         
         if instance.status == 'failed':
@@ -53,7 +56,7 @@ class TransactionApproveView(generics.UpdateAPIView):
             # Get the updated instance
             instance = self.get_object()
             # Render just the row HTML with the same ID
-            html = render_to_string(request,'myapp/transaction_row.html', {'transaction': instance})
+            html = render_to_string('myapp/transaction_row.html', {'transaction': instance}, request=request)
             return Response(html, content_type='text/html')
         except ValidationError as e:
             return Response(str(e), status=400)
@@ -78,7 +81,7 @@ class TransactionToggleFlagView(generics.UpdateAPIView):
             # Get the updated instance
             instance = self.get_object()
             # Render just the row HTML with the same ID
-            html = render_to_string(request,'myapp/transaction_row.html', {'transaction': instance})
+            html = render_to_string('myapp/transaction_row.html', {'transaction': instance}, request=request)
             return Response(html, content_type='text/html')
         except ValidationError as e:
             return Response(str(e), status=400)
