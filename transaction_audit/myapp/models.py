@@ -23,6 +23,7 @@ class Transaction(models.Model):
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['merchant']),
+            models.Index(fields=['status', 'merchant'])
         ]
         
     def __str__(self):
