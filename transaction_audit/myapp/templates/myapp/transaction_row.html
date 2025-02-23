@@ -66,12 +66,9 @@
             <span class="text-sm font-medium text-gray-900">{{ transaction.approved_by.username }}</span>
         </div>
         {% else %}
-        <span class="text-sm text-gray-400 flex items-center">
-            <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Pending
-        </span>
+        <div class="flex items-center justify-center w-full">
+            <span class="text-sm text-gray-500">—</span>
+        </div>
         {% endif %}
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -121,32 +118,3 @@
         animation: fadeOutRow 0.3s ease-out forwards;
     }
 </style>
-
-<script>
-    function handleRowUpdate(row) {
-        // Get current filters and ensure they're not empty strings
-        const statusSelect = document.querySelector('select[name="status"]');
-        const merchantInput = document.querySelector('input[name="merchant"]');
-        
-        const statusFilter = statusSelect ? statusSelect.value : '';
-        const merchantFilter = merchantInput ? merchantInput.value.toLowerCase().trim() : '';
-        
-        // Add a one-time event listener for the HTMX afterSwap event
-        row.addEventListener('htmx:afterSwap', function(evt) {
-            const updatedRow = evt.detail.target;
-            const rowStatus = updatedRow.dataset.status;
-            const rowMerchant = updatedRow.dataset.merchant;
-            
-            // Only hide if there are active filters that don't match
-            if ((statusFilter !== '' && rowStatus !== statusFilter) || 
-                (merchantFilter !== '' && !rowMerchant.includes(merchantFilter))) {
-                updatedRow.style.transition = 'opacity 0.3s ease-out';
-                updatedRow.style.opacity = '0';
-                setTimeout(() => {
-                    updatedRow.style.display = 'none';
-                    updatedRow.remove();
-                }, 300);
-            }
-        }, { once: true });
-    }
-</script> 

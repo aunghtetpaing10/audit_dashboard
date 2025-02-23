@@ -19,7 +19,7 @@ class Transaction(models.Model):
     history = HistoricalRecords()
     
     class Meta: 
-        ordering = ['-timestamp']
+        ordering = ['-timestamp', '-id']
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['merchant']),
