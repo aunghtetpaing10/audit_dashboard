@@ -140,6 +140,7 @@ python manage.py runserver
 - `GET /api/transactions/` - List transactions
 - `PUT /api/transactions/{id}/approve/` - Approve transaction (Admin only)
 - `PUT /api/transactions/{id}/flag/` - Flag transaction
+- `GET /api/transactions/{id}/history/` - Get transaction history
 
 ### Authentication
 - `POST /api/token/` - Obtain JWT token
