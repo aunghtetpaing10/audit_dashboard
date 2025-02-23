@@ -6,6 +6,7 @@ urlpatterns = [
     path('api/transactions/', views.TransactionListView.as_view(), name='transaction-list'),
     path('api/transactions/<int:pk>/approve/', views.approve_transaction, name='approve-transaction'),
     path('api/transactions/<int:pk>/toggle/', views.toggle_flag_transaction, name='toggle-flag'),
+    path('api/transactions/<int:pk>/history/', views.transaction_history, name='transaction-history'),
     
     path('api/token/', TokenObtainPairView.as_view(), name='get-token'),
     path('api/token/refresh/', views.refresh_token, name='refresh-token'),

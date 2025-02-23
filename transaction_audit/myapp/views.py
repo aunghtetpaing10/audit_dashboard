@@ -2,7 +2,7 @@ from django.views.generic import ListView
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
-from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string
@@ -32,10 +32,8 @@ class TransactionListView(generics.ListAPIView):
     
 @login_required
 @user_passes_test(lambda u: u.is_staff)
+@require_http_methods(["POST", "PUT"])
 def approve_transaction(request, pk):
-    if request.method != 'PUT':
-        return HttpResponseForbidden()
-        
     try:
         transaction = Transaction.objects.get(pk=pk)
         
@@ -44,6 +42,7 @@ def approve_transaction(request, pk):
         elif transaction.status == 'completed':
             return HttpResponse("Cannot update a completed transaction.", status=400)
             
+        transaction._change_reason = f"Approved by {request.user.username}"
         transaction.status = 'completed'
         transaction.approved_by = request.user
         transaction.save()
@@ -56,20 +55,18 @@ def approve_transaction(request, pk):
     except Transaction.DoesNotExist:
         return HttpResponse("Transaction not found", status=404)
     except Exception as e:
+        print(f"Error in approve_transaction: {str(e)}")
         return HttpResponse(str(e), status=400)
 
 @login_required
+@require_http_methods(["POST", "PUT"])
 def toggle_flag_transaction(request, pk):
-    if request.method != 'PUT':
-        return HttpResponseForbidden()
-        
     try:
         transaction = Transaction.objects.get(pk=pk)
         
-        if transaction.is_flagged:
-            return HttpResponse("Transaction is already flagged.", status=400)
-            
-        transaction.is_flagged = True
+        transaction.is_flagged = not transaction.is_flagged
+        action = "unflagged" if not transaction.is_flagged else "flagged"
+        transaction._change_reason = f"Transaction {action} by {request.user.username}"
         transaction.save()
         
         html = render_to_string('myapp/transaction_row.html', {
@@ -80,7 +77,44 @@ def toggle_flag_transaction(request, pk):
     except Transaction.DoesNotExist:
         return HttpResponse("Transaction not found", status=404)
     except Exception as e:
+        print(f"Error in toggle_flag_transaction: {str(e)}")
         return HttpResponse(str(e), status=400)
+    
+def transaction_history(request, pk):
+    try:
+        transaction = Transaction.objects.get(pk=pk)
+        history = transaction.history.all()
+        
+        # Convert history to list of changes
+        changes = []
+        for idx, record in enumerate(history):
+            if idx < len(history) - 1:
+                new_record = record
+                old_record = history[idx + 1]
+                change = {
+                    'date': new_record.history_date,
+                    'user': new_record.history_user.username if new_record.history_user else 'System',
+                    'reason': new_record.history_change_reason or 'No reason provided',
+                    'changes': []
+                }
+                
+                # Compare fields
+                for field in ['status', 'amount', 'is_flagged', 'approved_by']:
+                    old_value = getattr(old_record, field)
+                    new_value = getattr(new_record, field)
+                    if old_value != new_value:
+                        change['changes'].append({
+                            'field': field,
+                            'old': str(old_value),
+                            'new': str(new_value)
+                        })
+                
+                if change['changes']:
+                    changes.append(change)
+        
+        return JsonResponse({'history': changes})
+    except Transaction.DoesNotExist:
+        return HttpResponse("Transaction not found", status=404)
 
 class LoginPage(LoginView):
     template_name = 'myapp/login.html'
