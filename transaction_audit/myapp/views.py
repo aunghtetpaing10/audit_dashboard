@@ -19,10 +19,6 @@ from django.views.decorators.csrf import csrf_protect
 import json
 from django.db.models import Sum, Count
 import plotly.graph_objects as go
-import plotly.express as px
-from django.db.models.functions import TruncDate
-from datetime import datetime, timedelta
-from django.utils import timezone
 
 class TransactionPagination(PageNumberPagination):
     page_size = 10
