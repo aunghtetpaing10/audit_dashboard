@@ -1,19 +1,17 @@
 from django.views.generic import ListView
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string
 from rest_framework import generics, permissions
-from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Transaction
-from .serializers import TransactionSerializer, TransactionApproveSerializer, TransactionToggleFlagSerializer
+from .serializers import TransactionSerializer
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 import json
@@ -32,60 +30,57 @@ class TransactionListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     
-class TransactionApproveView(generics.UpdateAPIView):
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionApproveSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    
-    def perform_update(self, serializer):
-        if not self.request.user.is_staff:
-            raise ValidationError("Only admin users can approve transactions.")
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def approve_transaction(request, pk):
+    if request.method != 'PUT':
+        return HttpResponseForbidden()
+        
+    try:
+        transaction = Transaction.objects.get(pk=pk)
+        
+        if transaction.status == 'failed':
+            return HttpResponse("Cannot update a failed transaction.", status=400)
+        elif transaction.status == 'completed':
+            return HttpResponse("Cannot update a completed transaction.", status=400)
             
-        instance = self.get_object()
+        transaction.status = 'completed'
+        transaction.approved_by = request.user
+        transaction.save()
         
-        if instance.status == 'failed':
-            raise ValidationError("Cannot update a failed transaction.")
-        elif instance.status == 'completed':
-            raise ValidationError("Cannot update a completed transaction.")
-        
-        serializer.save(status='completed', approved_by=self.request.user)
-        
-    def update(self, request, *args, **kwargs):
-        try:
-            super().update(request, *args, **kwargs)
-            # Get the updated instance
-            instance = self.get_object()
-            # Render just the row HTML with the same ID
-            html = render_to_string('myapp/transaction_row.html', {'transaction': instance}, request=request)
-            return Response(html, content_type='text/html')
-        except ValidationError as e:
-            return Response(str(e), status=400)
+        html = render_to_string('myapp/transaction_row.html', {
+            'transaction': transaction,
+            'request': request
+        })
+        return HttpResponse(html)
+    except Transaction.DoesNotExist:
+        return HttpResponse("Transaction not found", status=404)
+    except Exception as e:
+        return HttpResponse(str(e), status=400)
 
-class TransactionToggleFlagView(generics.UpdateAPIView):
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionToggleFlagSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    
-    def perform_update(self, serializer):
-        instance = self.get_object()
+@login_required
+def toggle_flag_transaction(request, pk):
+    if request.method != 'PUT':
+        return HttpResponseForbidden()
         
-        if instance.is_flagged:
-            raise ValidationError("Transaction is already flagged.")
+    try:
+        transaction = Transaction.objects.get(pk=pk)
         
-        serializer.save(is_flagged=True)
-
-    def update(self, request, *args, **kwargs):
-        try:
-            super().update(request, *args, **kwargs)
-            # Get the updated instance
-            instance = self.get_object()
-            # Render just the row HTML with the same ID
-            html = render_to_string('myapp/transaction_row.html', {'transaction': instance}, request=request)
-            return Response(html, content_type='text/html')
-        except ValidationError as e:
-            return Response(str(e), status=400)
+        if transaction.is_flagged:
+            return HttpResponse("Transaction is already flagged.", status=400)
+            
+        transaction.is_flagged = True
+        transaction.save()
+        
+        html = render_to_string('myapp/transaction_row.html', {
+            'transaction': transaction,
+            'request': request
+        })
+        return HttpResponse(html)
+    except Transaction.DoesNotExist:
+        return HttpResponse("Transaction not found", status=404)
+    except Exception as e:
+        return HttpResponse(str(e), status=400)
 
 class LoginPage(LoginView):
     template_name = 'myapp/login.html'
@@ -259,4 +254,3 @@ def update_token(request):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
