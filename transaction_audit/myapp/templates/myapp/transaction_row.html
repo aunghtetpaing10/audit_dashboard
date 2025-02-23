@@ -85,8 +85,8 @@
                 Approve
             </button>
             {% endif %}
-            {% if not transaction.is_flagged %}
-            <button class="inline-flex items-center text-yellow-600 hover:text-yellow-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 rounded-md"
+            
+            <button class="inline-flex items-center {% if transaction.is_flagged %}text-red-600 hover:text-red-900{% else %}text-yellow-600 hover:text-yellow-900{% endif %} focus:outline-none focus:ring-2 focus:ring-offset-2 {% if transaction.is_flagged %}focus:ring-red-500{% else %}focus:ring-yellow-500{% endif %} rounded-md"
                     hx-put="{% url 'toggle-flag' transaction.id %}"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                     hx-target="closest tr"
@@ -94,16 +94,8 @@
                 <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
                 </svg>
-                Flag
+                {% if transaction.is_flagged %}Unflag{% else %}Flag{% endif %}
             </button>
-            {% else %}
-            <span class="inline-flex items-center text-yellow-600">
-                <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"/>
-                </svg>
-                Flagged
-            </span>
-            {% endif %}
         </div>
     </td>
 </tr>
