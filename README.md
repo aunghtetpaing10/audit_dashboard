@@ -28,7 +28,7 @@ A Django-based transaction monitoring and audit system with real-time updates, i
 ## Tech Stack
 
 - **Backend**: Django + Django REST Framework
-- **Frontend**: TailwindCSS + HTMX + Alpine.js
+- **Frontend**: TailwindCSS + HTMX
 - **Database**: PostgreSQL
 - **Visualization**: Plotly.js
 - **Containerization**: Docker
