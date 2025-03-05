@@ -129,11 +129,6 @@ python manage.py runserver
    - Real-time transaction status updates
    - Smooth transitions and animations
 
-2. **Transaction Processing**
-   - Atomic operations for status updates
-   - Optimistic locking for concurrent modifications
-   - Validation before state changes
-
 ## API Endpoints
 
 ### Transaction Management
@@ -145,6 +140,7 @@ python manage.py runserver
 ### Authentication
 - `POST /api/token/` - Obtain JWT token
 - `POST /api/token/refresh/` - Refresh JWT token
+- `POST /api/token/update/` - Update JWT token
 
 ## Contributing
 
