@@ -13,7 +13,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Transaction
 from .serializers import TransactionSerializer
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_protect
 import json
 from django.db.models import Sum, Count
 import plotly.graph_objects as go
@@ -32,7 +31,7 @@ class TransactionListView(generics.ListAPIView):
     
 @login_required
 @user_passes_test(lambda u: u.is_staff)
-@require_http_methods(["POST", "PUT"])
+@require_http_methods(["PUT"])
 def approve_transaction(request, pk):
     try:
         transaction = Transaction.objects.get(pk=pk)
@@ -59,7 +58,7 @@ def approve_transaction(request, pk):
         return HttpResponse(str(e), status=400)
 
 @login_required
-@require_http_methods(["POST", "PUT"])
+@require_http_methods(["PUT"])
 def toggle_flag_transaction(request, pk):
     try:
         transaction = Transaction.objects.get(pk=pk)
@@ -253,7 +252,6 @@ class DashboardView(ListView):
             return ['myapp/transaction_list.html']
         return [self.template_name]
 
-@csrf_protect
 @require_http_methods(["POST"])
 def refresh_token(request):
     try:
@@ -272,7 +270,6 @@ def refresh_token(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-@csrf_protect
 @require_http_methods(["POST"])
 def update_token(request):
     try:
